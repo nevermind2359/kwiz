@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Конспект→Квиз — проверь, как усвоил материал</title>
+<meta name="description" content="Вставь конспект или статью — генератор соберёт квиз, проверит ответы и покажет, какие темы западают. Режимы: по конспекту, по терминам, на время.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF7EF;
+  --ink:#161411;
+  --red:#BD2F1D;
+  --green:#307927;
+  --stone:#88837C;
+  --line:rgba(22,20,17,.16);
+  --muted:#565049;
+  --ghost:rgba(22,20,17,.08);
+  --hover:rgba(22,20,17,.035);
+  --header-bg:rgba(250,247,239,.92);
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'Manrope',-apple-system,'Segoe UI',sans-serif;
+  --ease:cubic-bezier(.86,0,.07,1);
+}
+[data-theme="night"]{
+  --paper:#16150F;
+  --ink:#F3EEE5;
+  --red:#E04A36;
+  --green:#4CAF50;
+  --stone:#8f887d;
+  --line:rgba(243,238,229,.2);
+  --muted:#ada294;
+  --ghost:rgba(243,238,229,.1);
+  --hover:rgba(243,238,229,.06);
+  --header-bg:rgba(22,21,15,.9);
+}
+html{background:var(--paper)}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.55;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;transition:background .5s,color .5s}
+::selection{background:var(--red);color:var(--paper)}
+button,input,textarea{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+
+.orn-band{height:26px;background:var(--red);opacity:.85;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 1l14 14-14 14L1 15z' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M15 8l7 7-7 7-7-7z' fill='black'/%3E%3C/svg%3E") center/auto 26px repeat-x;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 1l14 14-14 14L1 15z' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M15 8l7 7-7 7-7-7z' fill='black'/%3E%3C/svg%3E") center/auto 26px repeat-x}
+
+.header{position:fixed;top:0;left:0;right:0;z-index:60;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 5vw;border-bottom:1px solid transparent;transition:.35s}
+.header.scrolled{background:var(--header-bg);backdrop-filter:blur(12px);border-bottom-color:var(--line)}
+.logo{font-family:var(--serif);font-weight:800;font-size:1.15rem;letter-spacing:.01em;
+  text-decoration:none;text-transform:uppercase;color:inherit}
+.logo span{color:var(--red)}
+.theme-toggle{background:none;border:1px solid var(--ink);border-radius:999px;
+  width:58px;height:30px;position:relative;cursor:pointer;flex:none;transition:border-color .3s}
+.theme-toggle .thumb{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:var(--ink);display:flex;align-items:center;justify-content:center;
+  transition:transform .5s var(--ease),background .3s}
+[data-theme="night"] .theme-toggle .thumb{transform:translateX(28px)}
+.theme-toggle svg{width:13px;height:13px;stroke:var(--paper);fill:none;
+  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.theme-toggle .moon{display:none}
+[data-theme="night"] .theme-toggle .sun{display:none}
+[data-theme="night"] .theme-toggle .moon{display:block}
+
+.wrap{max-width:820px;margin:0 auto;padding:120px 20px 80px;min-height:100svh;
+  display:flex;flex-direction:column}
+.screen{display:none;flex-direction:column;flex:1}
+.screen.active{display:flex;animation:fade .5s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.step-tag{display:flex;gap:14px;align-items:center;text-transform:uppercase;
+  font-size:.7rem;font-weight:800;letter-spacing:.18em;color:var(--stone);margin-bottom:20px}
+.step-tag::after{content:"";flex:1;height:1px;background:var(--line)}
+.step-tag b{color:var(--red)}
+h1{font-family:var(--serif);font-weight:800;text-transform:uppercase;
+  font-size:clamp(2.2rem,6vw,4.2rem);line-height:1;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--red)}
+.lead{font-size:1.1rem;color:var(--muted);max-width:56ch;margin-top:18px}
+
+.btn{display:inline-block;text-decoration:none;text-transform:uppercase;
+  font-size:.76rem;font-weight:800;letter-spacing:.12em;
+  background:var(--ink);color:var(--paper);padding:15px 30px;border:1px solid var(--ink);
+  cursor:pointer;transition:background .3s,color .3s,transform .15s}
+.btn:hover{background:var(--red);border-color:var(--red);color:var(--paper)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--paper)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{background:var(--ink);border-color:var(--ink)}
+.btn:disabled{opacity:.35;pointer-events:none}
+
+/* --- mode picker --- */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:34px}
+.mode-card{background:transparent;border:1px solid var(--line);padding:22px;text-align:left;
+  cursor:pointer;position:relative;transition:border-color .25s,background .25s}
+.mode-card:hover{border-color:var(--ink);background:var(--hover)}
+.mode-card .m-num{font-family:var(--serif);font-size:.85rem;font-weight:600;color:var(--stone);transition:color .25s}
+.mode-card h3{font-family:var(--serif);font-size:1.35rem;font-weight:700;text-transform:uppercase;
+  margin:8px 0 8px;line-height:1.1}
+.mode-card p{font-size:.84rem;color:var(--muted)}
+.mode-card::after{content:"";position:absolute;left:0;bottom:-1px;height:3px;width:100%;
+  background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+.mode-card.active{border-color:var(--ink)}
+.mode-card.active::after{transform:scaleX(1)}
+.mode-card.active .m-num{color:var(--red)}
+
+.time-row{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  border:1px solid var(--line);padding:16px 20px;margin-top:14px;cursor:pointer;
+  transition:border-color .25s,background .25s}
+.time-row:hover{border-color:var(--ink);background:var(--hover)}
+.time-row .t-text b{display:block;font-size:.95rem;font-weight:700}
+.time-row .t-text span{font-size:.78rem;color:var(--muted)}
+.switch{width:52px;height:28px;border:1px solid var(--ink);border-radius:999px;
+  position:relative;flex:none;transition:background .3s}
+.switch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:var(--ink);transition:transform .4s var(--ease),background .3s}
+.time-row.on{border-color:var(--red)}
+.time-row.on .switch{background:var(--red);border-color:var(--red)}
+.time-row.on .switch i{transform:translateX(24px);background:#fff}
+.time-opts{display:none;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;
+  animation:fade .35s var(--ease)}
+.time-opts.on{display:flex}
+.time-opts-label{font-size:.72rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.14em;color:var(--stone)}
+.time-chip{background:transparent;border:1px solid var(--line);cursor:pointer;
+  font-family:var(--serif);font-weight:700;font-size:.95rem;min-width:52px;
+  padding:8px 0;text-align:center;transition:.25s}
+.time-chip:hover{border-color:var(--ink)}
+.time-chip.active{background:var(--red);border-color:var(--red);color:#fff}
+
+/* --- input screen --- */
+.input-card{margin-top:22px;border:1px solid var(--ink);background:var(--paper);
+  position:relative;transition:background .5s,border-color .5s}
+.input-card textarea{width:100%;min-height:220px;background:transparent;border:none;
+  padding:24px;resize:vertical;font-size:.98rem;line-height:1.6}
+.input-card textarea:focus{outline:none}
+.input-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;
+  flex-wrap:wrap;border-top:1px solid var(--line);padding:14px 18px}
+.char-count{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;
+  font-weight:800;color:var(--stone)}
+.file-btn{background:none;border:none;cursor:pointer;font-size:.72rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.12em;border-bottom:1px solid var(--ink);padding-bottom:2px}
+.input-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.hint{margin-top:16px;font-size:.8rem;color:var(--muted)}
+.hint b{color:var(--ink)}
+
+/* --- quiz screen --- */
+.q-progress{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.q-bar{flex:1;height:4px;background:var(--line);position:relative;overflow:hidden}
+.q-bar i{position:absolute;inset:0;background:var(--red);transform-origin:left;
+  transform:scaleX(0);transition:transform .6s var(--ease)}
+.q-count{font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap}
+.q-count b{color:var(--red)}
+.q-timer{height:3px;background:var(--line);margin-bottom:24px;position:relative;overflow:hidden;
+  display:none}
+.q-timer.on{display:block}
+.q-timer i{position:absolute;inset:0;background:var(--red);transform-origin:left}
+.q-timer i.run{transition:transform linear}
+.q-topic{display:inline-block;font-size:.66rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.16em;color:var(--red);border:1px solid var(--red);padding:6px 12px;margin-bottom:18px;width:max-content}
+.q-text{font-family:var(--serif);font-size:clamp(1.25rem,2.6vw,1.7rem);font-weight:700;
+  line-height:1.3;margin-bottom:28px}
+.q-text .gap{display:inline-block;min-width:90px;border-bottom:2px dashed var(--red);
+  color:var(--red);text-align:center;font-style:normal}
+.q-opts{display:grid;gap:12px}
+.opt{display:flex;align-items:flex-start;gap:16px;text-align:left;background:transparent;
+  border:1px solid var(--line);padding:16px 18px;cursor:pointer;font-size:1rem;
+  transition:border-color .25s,background .25s,transform .15s}
+.opt .key{font-family:var(--serif);font-weight:800;font-size:.85rem;color:var(--stone);
+  width:20px;flex:none;transition:color .25s;padding-top:2px}
+.opt:hover{border-color:var(--ink);background:var(--hover)}
+.opt:hover .key{color:var(--red)}
+.opt:disabled{cursor:default}
+.opt.correct{border-color:var(--green);background:color-mix(in srgb,var(--green) 10%,transparent)}
+.opt.correct .key{color:var(--green)}
+.opt.wrong{border-color:var(--red);background:color-mix(in srgb,var(--red) 10%,transparent);
+  animation:shake .4s}
+.opt.wrong .key{color:var(--red)}
+.opt.dim{opacity:.4}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.q-verdict{min-height:52px;margin-top:22px;display:flex;align-items:center;gap:14px;
+  font-weight:700;font-size:.95rem;opacity:0;transform:translateY(8px);
+  transition:opacity .4s,transform .4s}
+.q-verdict.show{opacity:1;transform:none}
+.q-verdict.ok{color:var(--green)}
+.q-verdict.no{color:var(--red)}
+.q-foot{display:flex;justify-content:flex-end;margin-top:14px}
+
+/* --- results --- */
+.res-score{display:flex;align-items:baseline;gap:18px;margin:26px 0 8px}
+.res-score b{font-family:var(--serif);font-size:clamp(4rem,12vw,7rem);font-weight:800;line-height:1}
+.res-score span{font-family:var(--serif);font-size:1.6rem;color:var(--stone)}
+.res-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.res-meta span{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;
+  border:1px solid var(--line);padding:6px 12px;color:var(--stone)}
+.res-meta span.red{color:var(--red);border-color:var(--red)}
+.res-label{font-size:1.05rem;color:var(--muted);max-width:52ch;margin-top:16px}
+.res-label b{color:var(--ink)}
+.topic-list{margin-top:36px;border-top:1px solid var(--ink)}
+.topic-row{display:grid;grid-template-columns:1fr auto;gap:6px 18px;align-items:center;
+  padding:18px 0;border-bottom:1px solid var(--line)}
+.topic-row h4{font-size:1rem;font-weight:700;text-transform:capitalize}
+.topic-row .t-stat{font-size:.78rem;font-weight:800;letter-spacing:.08em;color:var(--stone)}
+.topic-row.weak .t-stat,.topic-row.weak h4{color:var(--red)}
+.topic-row.good .t-stat{color:var(--green)}
+.t-bar{grid-column:1/-1;height:5px;background:var(--line);position:relative;overflow:hidden}
+.t-bar i{position:absolute;inset:0;background:var(--green);transform-origin:left;
+  transform:scaleX(0);transition:transform .9s var(--ease)}
+.topic-row.weak .t-bar i{background:var(--red)}
+.weak-box{margin-top:28px;border:1px solid var(--red);padding:22px 24px;position:relative}
+.weak-box::before{content:"";position:absolute;top:-1px;left:-1px;right:-1px;height:4px;background:var(--red)}
+.weak-box h3{font-family:var(--serif);font-size:1.2rem;font-weight:700;text-transform:uppercase;margin-bottom:8px}
+.weak-box p{font-size:.92rem;color:var(--muted)}
+.weak-box .topics-inline{color:var(--red);font-weight:800;text-transform:capitalize}
+.good-box{margin-top:28px;border:1px solid var(--green);padding:22px 24px}
+.good-box h3{font-family:var(--serif);font-size:1.2rem;font-weight:700;text-transform:uppercase;
+  color:var(--green);margin-bottom:8px}
+.good-box p{font-size:.92rem;color:var(--muted)}
+.res-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
+
+footer{border-top:1px solid var(--line)}
+.foot-inner{max-width:820px;margin:0 auto;padding:26px 20px;display:flex;
+  justify-content:space-between;gap:14px;flex-wrap:wrap;
+  font-size:.7rem;color:var(--stone);text-transform:uppercase;letter-spacing:.12em}
+
+@media(max-width:600px){
+  .wrap{padding:100px 16px 60px}
+  .mode-grid{grid-template-columns:1fr}
+  .q-foot{justify-content:stretch}
+  .q-foot .btn{width:100%;text-align:center}
+  .input-actions .btn{flex:1;text-align:center}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="header" id="header">
+  <a class="logo" href="#">Конспект<span>→</span>Квиз</a>
+  <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
+    <span class="thumb">
+      <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3 19 19M19 5l-1.7 1.7M6.7 17.3 5 19"/></svg>
+      <svg class="moon" viewBox="0 0 24 24"><path d="M20 13.6A8.2 8.2 0 1 1 10.4 4 6.6 6.6 0 0 0 20 13.6z"/></svg>
+    </span>
+  </button>
+</header>
+
+<main class="wrap">
+
+  <!-- STEP 1: input -->
+  <section class="screen active" id="screen-input">
+    <div class="step-tag">Шаг <b>01</b> · Материал</div>
+    <h1>Вставь конспект — <em>получи квиз</em></h1>
+    <p class="lead">Генератор найдёт в тексте ключевые термины и утверждения, соберёт из них вопросы, а в конце покажет, какие темы у тебя западают.</p>
+
+    <div class="mode-grid" role="radiogroup" aria-label="Тип квиза">
+      <button class="mode-card active" id="mode-conspect" type="button" role="radio" aria-checked="true">
+        <div class="m-num">01</div>
+        <h3>По конспекту</h3>
+        <p>Вопросы по смыслу: пропущенные слова в предложениях и проверка утверждений «верно/неверно».</p>
+      </button>
+      <button class="mode-card" id="mode-terms" type="button" role="radio" aria-checked="false">
+        <div class="m-num">02</div>
+        <h3>По терминам</h3>
+        <p>Тренировка определений: угадай термин по описанию или найди верное определение к термину.</p>
+      </button>
+    </div>
+
+    <div class="time-row" id="time-row" role="switch" aria-checked="false" tabindex="0">
+      <div class="t-text"><b>Режим «на время»</b><span>Не успел ответить — ответ засчитан неверным</span></div>
+      <span class="switch"><i></i></span>
+    </div>
+    <div class="time-opts" id="time-opts">
+      <span class="time-opts-label">Секунд на вопрос:</span>
+      <button class="time-chip" type="button" data-sec="10">10</button>
+      <button class="time-chip active" type="button" data-sec="20">20</button>
+      <button class="time-chip" type="button" data-sec="30">30</button>
+      <button class="time-chip" type="button" data-sec="60">60</button>
+    </div>
+
+    <div class="input-card">
+      <textarea id="src" placeholder="Вставь сюда текст: лекцию, конспект, статью…"></textarea>
+      <div class="input-bar">
+        <span class="char-count" id="char-count">0 символов</span>
+        <button class="file-btn" id="file-btn" type="button">Загрузить .txt файл</button>
+        <input type="file" id="file-input" accept=".txt,text/plain" hidden>
+      </div>
+    </div>
+    <div class="input-actions">
+      <button class="btn red" id="build-btn" disabled>Собрать квиз</button>
+      <button class="btn ghost" id="sample-btn">Пример текста</button>
+    </div>
+    <p class="hint"><b></b>Чем больше материала — тем точнее вопросы.</p>
+  </section>
+
+  <!-- STEP 2: quiz -->
+  <section class="screen" id="screen-quiz">
+    <div class="step-tag">Шаг <b>02</b> · Квиз <b id="mode-badge" style="margin-left:8px"></b></div>
+    <div class="q-progress">
+      <span class="q-count">Вопрос <b id="q-now">1</b> / <span id="q-total">10</span></span>
+      <div class="q-bar"><i id="q-fill"></i></div>
+    </div>
+    <div class="q-timer" id="q-timer"><i id="q-timer-fill"></i></div>
+    <div class="q-topic" id="q-topic">Тема</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="q-opts" id="q-opts"></div>
+    <div class="q-verdict" id="q-verdict"></div>
+    <div class="q-foot"><button class="btn" id="q-next" disabled>Далее</button></div>
+  </section>
+
+  <!-- STEP 3: results -->
+  <section class="screen" id="screen-result">
+    <div class="step-tag">Шаг <b>03</b> · Результат</div>
+    <h1>Итоги <em>прогона</em></h1>
+    <div class="res-score"><b id="res-pct">0%</b><span id="res-frac">0 из 10</span></div>
+    <div class="res-meta" id="res-meta"></div>
+    <p class="res-label" id="res-label"></p>
+    <div class="topic-list" id="topic-list"></div>
+    <div id="res-advice"></div>
+    <div class="res-actions">
+      <button class="btn red" id="retry-btn">Пройти ещё раз</button>
+      <button class="btn ghost" id="newtext-btn">Новый материал</button>
+    </div>
+  </section>
+
+</main>
+
+<div class="orn-band" aria-hidden="true"></div>
+
+<script>
+// theme
+const root=document.documentElement;
+const savedTheme=localStorage.getItem('gf_theme');
+const systemNight=matchMedia('(prefers-color-scheme: dark)').matches;
+root.dataset.theme=savedTheme||(systemNight?'night':'day');
+document.getElementById('theme-toggle').addEventListener('click',()=>{
+  const next=root.dataset.theme==='night'?'day':'night';
+  root.dataset.theme=next;
+  localStorage.setItem('gf_theme',next);
+});
+addEventListener('scroll',()=>document.getElementById('header')
+  .classList.toggle('scrolled',scrollY>40),{passive:true});
+
+// ---------- generator (client-side, no AI) ----------
+const STOP=new Set(('и,в,во,не,что,он,на,я,с,со,как,а,то,все,она,так,его,но,да,ты,к,у,же,вы,за,бы,по,только,ее,мне,было,вот,от,меня,еще,нет,о,из,ему,теперь,когда,даже,ну,вдруг,ли,если,уже,или,ни,быть,был,него,до,вас,нибудь,опять,уж,вам,сказал,ведь,там,потом,себя,ничего,ей,может,они,тут,где,есть,надо,ней,для,мы,тебя,их,чем,была,сам,чтоб,без,будто,чего,раз,тоже,себе,под,будет,ж,тогда,кто,этот,того,потому,этого,какой,совсем,ним,здесь,этом,один,почти,мой,тем,чтобы,нее,сейчас,были,куда,зачем,всех,никогда,можно,при,наконец,два,об,другой,хоть,после,над,больше,тот,через,эти,нас,про,всего,них,какая,много,разве,три,эту,моя,впрочем,хорошо,свою,этой,перед,иногда,лучше,чуть,том,нельзя,такой,им,более,всегда,конечно,всю,между,это,который,которая,которые,которого,которой,свои,также,именно,очень,наш,ваш,такие,этим,этих,одна,одно,одни,вне,кроме,среди,вдоль,вместо,вследствие,благодаря,согласно,навстречу,вопреки,используется,является,например,таким,образом,однако,поэтому,свой,своя,своё,наша,наше,её,это,ходе,стал,стала,были,было,была,самый,самая,самое').split(','));
+const SENT_SPLIT=/(?<=[.!?…])\s+/;
+const WORD_RE=/[А-Яа-яЁёA-Za-z-]{4,}/g;
+
+function splitSentences(text){
+  return text.replace(/\s+/g,' ').split(SENT_SPLIT)
+    .map(s=>s.trim()).filter(s=>s.length>=45&&s.length<=320);
+}
+function topWords(text,n){
+  const freq={};
+  (text.toLowerCase().match(WORD_RE)||[]).forEach(w=>{
+    if(STOP.has(w)||/^\d/.test(w))return;
+    freq[w]=(freq[w]||0)+1;
+  });
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,n).map(e=>e[0]);
+}
+function findKeywords(sentence,keywords){
+  const found=[];
+  sentence.toLowerCase().replace(WORD_RE,m=>{if(keywords.includes(m))found.push(m)});
+  return found;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function buildTopics(sentences,keywords){
+  return sentences.map((s,i)=>{
+    const ks=findKeywords(s,keywords);
+    return ks[0]||keywords[i%Math.max(1,Math.min(keywords.length,4))]||'общее';
+  });
+}
+function maskWord(s,k){
+  const re=new RegExp('(^|[^А-Яа-яЁёA-Za-z-])('+k+')([^А-Яа-яЁёA-Za-z-]|$)','i');
+  return re.test(s)?{ok:true,out:s.replace(re,'$1…gap…$3')}:null;
+}
+
+// mode: по конспекту (gap + true/false)
+function makeConspectQuiz(text){
+  const sentences=splitSentences(text);
+  if(sentences.length<4)return null;
+  const keywords=topWords(text,24);
+  if(keywords.length<5)return null;
+  const topics=buildTopics(sentences,keywords);
+  const used=new Set(),questions=[];
+  const pool=shuffle([...sentences]);
+  const target=Math.min(10,Math.max(5,Math.floor(sentences.length*.7)));
+  for(const s of pool){
+    if(questions.length>=target)break;
+    const ks=findKeywords(s,keywords).filter(k=>!used.has(k));
+    if(!ks.length)continue;
+    const k=ks[0];
+    const m=maskWord(s,k);if(!m)continue;
+    const distractors=shuffle(keywords.filter(w=>w!==k&&!s.toLowerCase().includes(w))).slice(0,3);
+    if(distractors.length<3)continue;
+    used.add(k);
+    questions.push({type:'gap',topic:topics[sentences.indexOf(s)],
+      text:m.out.replace('…gap…','<em class="gap">______</em>'),
+      answer:k,options:shuffle([k,...distractors])});
+  }
+  for(const s of shuffle([...sentences])){
+    if(questions.length>=Math.min(12,target+2))break;
+    const ks=findKeywords(s,keywords).filter(k=>!used.has(k));
+    if(!ks.length)continue;
+    const k=ks[0];
+    const wrong=keywords.find(w=>w!==k&&Math.abs(w.length-k.length)<=4);
+    if(!wrong)continue;
+    const m=maskWord(s,k);if(!m)continue;
+    used.add(k);
+    const truth=Math.random()<.5;
+    const shown=truth?s:m.out.replace('…gap…',wrong);
+    questions.push({type:'tf',topic:topics[sentences.indexOf(s)],
+      text:'Верно ли утверждение: «'+shown+'»',answer:truth?'Верно':'Неверно',
+      options:['Верно','Неверно']});
+  }
+  return questions.length>=4?questions.slice(0,12):null;
+}
+
+// mode: по терминам (угадай термин по описанию / выбери верное определение)
+// отсеиваем слова, похожие на прилагательные, наречия и глаголы — оставляем «терминообразные» существительные
+const BAD_TERM=/(ый|ий|ой|ая|ое|ые|его|ого|ему|ому|ым|им|ых|их|но|во|ет|ит|ют|ут|ат|ять|ть|лся|лась|лось|ются|ится|ем)$/;
+function makeTermsQuiz(text){
+  const sentences=splitSentences(text);
+  if(sentences.length<4)return null;
+  const all=topWords(text,30);
+  const keywords=all.filter(w=>!BAD_TERM.test(w));
+  if(keywords.length<5)return null;
+  const used=new Set(),questions=[];
+  const pairs=[];
+  sentences.forEach(s=>findKeywords(s,keywords).forEach(k=>pairs.push({s,k})));
+  const target=Math.min(10,Math.max(4,pairs.length));
+  for(const {s,k} of shuffle(pairs)){
+    if(questions.length>=target)break;
+    if(used.has(k))continue;
+    const m=maskWord(s,k);if(!m)continue;
+    if(Math.random()<.5){
+      // направление 1: описание → термин
+      const distractors=shuffle(keywords.filter(w=>w!==k&&!s.toLowerCase().includes(w))).slice(0,3);
+      if(distractors.length<3)continue;
+      questions.push({type:'term',topic:k,
+        text:'О каком термине идёт речь?<br>«'+m.out.replace('…gap…','<em class="gap">______</em>')+'»',
+        answer:k,options:shuffle([k,...distractors])});
+    }else{
+      // направление 2: термин → верное определение
+      const wrongSents=shuffle(sentences.filter(x=>x!==s&&!x.toLowerCase().includes(k))).slice(0,3);
+      if(wrongSents.length<3)continue;
+      const cut=t=>t.length>150?t.slice(0,147).replace(/\s+\S*$/,'')+'…':t;
+      questions.push({type:'def',topic:k,
+        text:'Какое утверждение о термине «'+k+'» верное?',
+        answer:cut(s),options:shuffle([cut(s),...wrongSents.map(cut)])});
+    }
+    used.add(k);
+  }
+  return questions.length>=4?questions.slice(0,12):null;
+}
+
+// ---------- screens ----------
+const screens={input:document.getElementById('screen-input'),
+  quiz:document.getElementById('screen-quiz'),result:document.getElementById('screen-result')};
+function show(name){
+  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  screens[name].classList.add('active');
+  scrollTo({top:0,behavior:'smooth'});
+}
+
+// ---------- settings: mode + timer ----------
+let mode='conspect',timed=false;
+const mcConspect=document.getElementById('mode-conspect'),mcTerms=document.getElementById('mode-terms');
+function setMode(m){
+  mode=m;
+  mcConspect.classList.toggle('active',m==='conspect');
+  mcTerms.classList.toggle('active',m==='terms');
+  mcConspect.setAttribute('aria-checked',m==='conspect');
+  mcTerms.setAttribute('aria-checked',m==='terms');
+}
+mcConspect.addEventListener('click',()=>setMode('conspect'));
+mcTerms.addEventListener('click',()=>setMode('terms'));
+const timeRow=document.getElementById('time-row');
+const timeOpts=document.getElementById('time-opts');
+function toggleTimed(){
+  timed=!timed;
+  timeRow.classList.toggle('on',timed);
+  timeRow.setAttribute('aria-checked',timed);
+  timeOpts.classList.toggle('on',timed);
+}
+timeRow.addEventListener('click',toggleTimed);
+timeRow.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleTimed()}});
+let questionTime=20;
+document.querySelectorAll('.time-chip').forEach(chip=>chip.addEventListener('click',e=>{
+  e.stopPropagation();
+  questionTime=+chip.dataset.sec;
+  document.querySelectorAll('.time-chip').forEach(c=>c.classList.toggle('active',c===chip));
+}));
+
+// ---------- input ----------
+const src=document.getElementById('src'),buildBtn=document.getElementById('build-btn'),
+  charCount=document.getElementById('char-count');
+src.addEventListener('input',()=>{
+  const len=src.value.trim().length;
+  charCount.textContent=len+' символов';
+  buildBtn.disabled=len<40; // минимум пара осмысленных предложений
+});
+document.getElementById('file-btn').addEventListener('click',()=>document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{src.value=r.result;src.dispatchEvent(new Event('input'))};
+  r.readAsText(f,'utf-8');
+});
+const SAMPLE=`Фотосинтез — это процесс, в ходе которого зелёные растения преобразуют световую энергию в химическую. Главным пигментом фотосинтеза является хлорофилл, который поглощает свет преимущественно в красной и синей областях спектра. Именно поэтому листья большинства растений выглядят зелёными: зелёный свет отражается.
+Фотосинтез происходит в хлоропластах — особых органеллах растительной клетки. Внутри хлоропластов находятся тилакоидные мембраны, на которых расположены молекулы хлорофилла. Световая стадия фотосинтеза идёт именно на этих мембранах и приводит к образованию молекул АТФ и восстановителя НАДФН.
+Тёмная стадия фотосинтеза, или цикл Кальвина, протекает в строме хлоропласта и не требует света напрямую. В ходе цикла Кальвина углекислый газ из атмосферы фиксируется и превращается в глюкозу. Фермент Рубиско запускает первую реакцию этого цикла и считается самым распространённым белком на Земле.
+Значение фотосинтеза трудно переоценить: он обеспечивает планету кислородом и служит основой почти всех пищевых цепей. Фитопланктон океанов производит около половины всего кислорода атмосферы, а леса умеренного пояса — значительную часть остального.
+На интенсивность фотосинтеза влияют освещённость, концентрация углекислого газа, температура и доступность воды. При недостатке воды устьица листа закрываются, приток углекислого газа падает, и фотосинтез замедляется. В жару многие растения переходят на экономный режим, чтобы не потерять влагу.`;
+document.getElementById('sample-btn').addEventListener('click',()=>{
+  src.value=SAMPLE;src.dispatchEvent(new Event('input'));
+});
+
+// ---------- quiz run ----------
+let quiz=[],qi=0,answers=[],timerId=null,timerRAF=null;
+
+const qNow=document.getElementById('q-now'),qTotal=document.getElementById('q-total'),
+  qFill=document.getElementById('q-fill'),qTopic=document.getElementById('q-topic'),
+  qText=document.getElementById('q-text'),qOpts=document.getElementById('q-opts'),
+  qVerdict=document.getElementById('q-verdict'),qNext=document.getElementById('q-next'),
+  qTimer=document.getElementById('q-timer'),qTimerFill=document.getElementById('q-timer-fill'),
+  modeBadge=document.getElementById('mode-badge');
+
+buildBtn.addEventListener('click',()=>{
+  const q=mode==='terms'?makeTermsQuiz(src.value):makeConspectQuiz(src.value);
+  if(!q){
+    alert('Не удалось собрать квиз: в тексте мало осмысленных предложений или терминов. Добавь ещё материала — чем больше текста, тем точнее вопросы.');
+    return;
+  }
+  quiz=q;qi=0;answers=[];
+  qTotal.textContent=quiz.length;
+  modeBadge.textContent='· '+(mode==='terms'?'по терминам':'по конспекту')+(timed?' · на время':'');
+  qTimer.classList.toggle('on',timed);
+  show('quiz');
+  renderQ();
+});
+
+function startTimer(){
+  stopTimer();
+  if(!timed)return;
+  qTimerFill.style.transition='none';
+  qTimerFill.style.transform='scaleX(1)';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    qTimerFill.style.transition='transform '+questionTime+'s linear';
+    qTimerFill.style.transform='scaleX(0)';
+  }));
+  timerId=setTimeout(()=>{
+    const q=quiz[qi];
+    lockAnswers(q,null,true);
+  },questionTime*1000);
+}
+function stopTimer(){
+  if(timerId){clearTimeout(timerId);timerId=null}
+  if(timerRAF){cancelAnimationFrame(timerRAF);timerRAF=null}
+}
+
+function renderQ(){
+  const q=quiz[qi];
+  qNow.textContent=qi+1;
+  qFill.style.transform='scaleX('+(qi/quiz.length)+')';
+  qTopic.textContent='Тема: '+q.topic;
+  qText.innerHTML=q.text;
+  qVerdict.className='q-verdict';qVerdict.textContent='';
+  qNext.disabled=true;
+  qNext.textContent='Далее';
+  qOpts.innerHTML='';
+  const keys=['А','Б','В','Г'];
+  q.options.forEach((opt,i)=>{
+    const b=document.createElement('button');
+    b.className='opt';b.type='button';
+    b.innerHTML='<span class="key">'+keys[i]+'</span><span>'+opt+'</span>';
+    b.addEventListener('click',()=>lockAnswers(q,b,false));
+    qOpts.appendChild(b);
+  });
+  startTimer();
+}
+function lockAnswers(q,clicked,expired){
+  stopTimer();
+  const chosen=clicked?clicked.querySelector('span:last-child').textContent:null;
+  const ok=chosen!==null&&chosen.toLowerCase()===q.answer.toLowerCase();
+  answers.push({topic:q.topic,ok});
+  [...qOpts.children].forEach(b=>{
+    b.disabled=true;
+    const val=b.querySelector('span:last-child').textContent;
+    if(val.toLowerCase()===q.answer.toLowerCase())b.classList.add('correct');
+    else if(b!==clicked)b.classList.add('dim');
+  });
+  if(clicked&&!ok)clicked.classList.add('wrong');
+  qVerdict.classList.add('show',ok?'ok':'no');
+  qVerdict.textContent=expired?'Время вышло! Правильный ответ: '+q.answer:
+    ok?'Верно!':'Неверно. Правильный ответ: '+q.answer;
+  qNext.disabled=false;
+  qNext.textContent=qi+1===quiz.length?'К результатам':'Далее';
+}
+qNext.addEventListener('click',()=>{
+  stopTimer();
+  qi++;
+  if(qi>=quiz.length){renderResults();show('result')}
+  else renderQ();
+});
+
+// ---------- results ----------
+function renderResults(){
+  const total=answers.length,right=answers.filter(a=>a.ok).length;
+  const pct=Math.round(right/total*100);
+  document.getElementById('res-frac').textContent=right+' из '+total;
+  const pctEl=document.getElementById('res-pct');
+  let v=0;const t=setInterval(()=>{v+=Math.ceil(Math.max(1,pct)/24);if(v>=pct){v=pct;clearInterval(t)}pctEl.textContent=v+'%'},40);
+  document.getElementById('res-meta').innerHTML=
+    '<span>'+(mode==='terms'?'Квиз по терминам':'Квиз по конспекту')+'</span>'+
+    (timed?'<span class="red">Режим на время · '+questionTime+' сек</span>':'<span>Без ограничения времени</span>');
+  document.getElementById('res-label').innerHTML=
+    pct>=80?'<b>Отличный результат</b> — материал усвоен уверенно. Ниже разбивка по темам.':
+    pct>=55?'<b>Неплохо</b>, но есть пробелы. Смотри разбивку по темам — она покажет, что повторить.':
+    '<b>Материал усвоен слабо.</b> Разбивка по темам подскажет, с чего начать повторение.';
+
+  const byTopic={};
+  answers.forEach(a=>{(byTopic[a.topic]=byTopic[a.topic]||{ok:0,all:0});byTopic[a.topic].all++;if(a.ok)byTopic[a.topic].ok++});
+  const list=document.getElementById('topic-list');list.innerHTML='';
+  const weak=[];
+  Object.entries(byTopic).sort((a,b)=>a[1].ok/a[1].all-b[1].ok/b[1].all).forEach(([name,t])=>{
+    const p=Math.round(t.ok/t.all*100),isWeak=p<60;
+    if(isWeak)weak.push(name);
+    const row=document.createElement('div');
+    row.className='topic-row '+(isWeak?'weak':'good');
+    row.innerHTML='<h4>'+name+'</h4><span class="t-stat">'+t.ok+'/'+t.all+' · '+p+'%</span>'+
+      '<div class="t-bar"><i></i></div>';
+    list.appendChild(row);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      row.querySelector('.t-bar i').style.transform='scaleX('+(p/100)+')';
+    }));
+  });
+
+  const box=document.getElementById('res-advice');
+  if(weak.length){
+    box.innerHTML='<div class="weak-box"><h3>Западают темы</h3><p>'+
+      'Стоит повторить: <span class="topics-inline">'+weak.join(', ')+'</span>. '+
+      'Перечитай фрагменты конспекта, где встречаются эти термины, и пройди квиз ещё раз — вопросы соберутся заново.</p></div>';
+  }else{
+    box.innerHTML='<div class="good-box"><h3>Пробелов нет</h3><p>'+
+      'Все темы закрыты минимум на 60%. Можно добавить новый материал и расширить проверку.</p></div>';
+  }
+}
+document.getElementById('retry-btn').addEventListener('click',()=>{qi=0;answers=[];shuffle(quiz);show('quiz');renderQ()});
+document.getElementById('newtext-btn').addEventListener('click',()=>show('input'));
+</script>
+</body>
+</html>
